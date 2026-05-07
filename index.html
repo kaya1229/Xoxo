@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XO Rhythm: Balance of Silence</title>
+    <style>
+        /* 1. 손그림 감성 디자인 */
+        @font-face {
+            font-family: 'Handwriting';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/Momsuim.woff2') format('woff2');
+        }
+
+        body {
+            background-color: #f0f0f0;
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 20px 20px; /* 모눈종이 느낌 */
+            font-family: 'Handwriting', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 2. 저울 연출 */
+        #scale-container {
+            position: relative;
+            width: 300px;
+            height: 100px;
+            margin-bottom: 50px;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #scale-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            position: absolute;
+            top: 50%;
+        }
+
+        #scale-pivot {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 25px solid #333;
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .count-display {
+            position: absolute;
+            top: -30px;
+            font-size: 24px;
+            display: none; /* 게임 중에는 숨김 */
+        }
+
+        /* 3. 입체 버튼 디자인 */
+        .game-container {
+            display: flex;
+            gap: 40px;
+        }
+
+        .btn-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .xo-button {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            border: 3px solid #333;
+            border-radius: 15px 25px 12px 30px; /* 삐뚤빼뚤 */
+            font-size: 60px;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 8px 0 #333; /* 튀어나온 느낌 */
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .xo-button:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #333;
+        }
+
+        /* 음수 패널티: 빨간 빗금 */
+        .xo-button.penalty {
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 0, 0, 0.2) 5px, rgba(255, 0, 0, 0.2) 10px);
+            border-color: #ff4d4d;
+        }
+
+        /* 4. 효과 및 상태 */
+        #status-indicator {
+            font-size: 30px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .active-glow {
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5), 0 8px 0 #333 !important;
+        }
+
+        /* 5. 팝업창 */
+        #result-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 40px;
+            border: 4px solid #333;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #result-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        button.retry-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-family: 'Handwriting';
+            background: #eee;
+            border: 2px solid #333;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="status-indicator">노래 재생 준비...</div>
+
+    <div id="scale-container">
+        <div id="scale-bar">
+            <span id="x-count-final" class="count-display" style="left: 0;">0</span>
+            <span id="o-count-final" class="count-display" style="right: 0;">0</span>
+        </div>
+    </div>
+    <div id="scale-pivot"></div>
+
+    <div class="game-container">
+        <div class="btn-wrapper">
+            <button id="btnX" class="xo-button">X</button>
+        </div>
+        <div class="btn-wrapper">
+            <button id="btnO" class="xo-button">O</button>
+        </div>
+    </div>
+
+    <div id="result-popup">
+        <h1 id="result-title">성공!</h1>
+        <p id="result-score">점수: 0</p>
+        <button class="retry-btn" onclick="resetGame()">다시 하기</button>
+    </div>
+
+    <script>
+        let xCount = 0;
+        let oCount = 0;
+        let isActive = false;
+        let isGameOver = false;
+
+        const btnX = document.getElementById('btnX');
+        const btnO = document.getElementById('btnO');
+        const scale = document.getElementById('scale-container');
+        const status = document.getElementById('status-indicator');
+        const popup = document.getElementById('result-popup');
+
+        // --- 임시 시뮬레이션 로직 (음원 분석 대신) ---
+        function toggleActivity() {
+            if (isGameOver) return;
+            isActive = !isActive;
+            if (isActive) {
+                status.innerText = "★ XO 구간! ★";
+                btnX.classList.add('active-glow');
+                btnO.classList.add('active-glow');
+                // 활성화 시 저울 수평 (수정 사항 반영)
+                scale.style.transform = `rotate(0deg)`;
+            } else {
+                status.innerText = "기울기 확인 중...";
+                btnX.classList.remove('active-glow');
+                btnO.classList.remove('active-glow');
+                updateScale(); // 비활성화 시 기울기 반영
+            }
+        }
+
+        // 5초마다 활성화/비활성화 전환 시뮬레이션 (나중에 음원 타임스탬프로 교체)
+        setInterval(toggleActivity, 4000);
+
+        // --- 클릭 로직 ---
+        function handleBtnClick(type) {
+            if (isGameOver) return;
+
+            if (type === 'X') {
+                isActive ? xCount++ : xCount--;
+                if (xCount < 0) btnX.classList.add('penalty');
+                else btnX.classList.remove('penalty');
+            } else {
+                isActive ? oCount++ : oCount--;
+                if (oCount < 0) btnO.classList.add('penalty');
+                else btnO.classList.remove('penalty');
+            }
+            
+            // 클릭 시 튀어나오는 효과 (CSS :active로 대체됨)
+        }
+
+        btnX.addEventListener('click', () => handleBtnClick('X'));
+        btnO.addEventListener('click', () => handleBtnClick('O'));
+
+        // 키보드 조작
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A') handleBtnClick('X');
+            if (e.key === 'l' || e.key === 'L') handleBtnClick('O');
+        });
+
+        // --- 저울 업데이트 ---
+        function updateScale() {
+            const diff = xCount - oCount;
+            if (Math.abs(diff) >= 5) {
+                const angle = diff > 0 ? 15 : -15; // X가 많으면 오른쪽(양수)으로 기움
+                scale.style.transform = `rotate(${angle}deg)`;
+            } else {
+                scale.style.transform = `rotate(0deg)`;
+            }
+        }
+
+        // --- 게임 종료 시뮬레이션 (30초 후) ---
+        setTimeout(finishGame, 30000);
+
+        function finishGame() {
+            isGameOver = true;
+            status.innerText = "정산 중...";
+            
+            const xFinal = document.getElementById('x-count-final');
+            const oFinal = document.getElementById('o-count-final');
+            xFinal.style.display = 'block';
+            oFinal.style.display = 'block';
+
+            let curX = 0;
+            let curO = 0;
+
+            // 숫자 카운트 애니메이션
+            const interval = setInterval(() => {
+                if (curX !== xCount) curX < xCount ? curX++ : curX--;
+                if (curO !== oCount) curO < oCount ? curO++ : curO--;
+
+                xFinal.innerText = curX;
+                oFinal.innerText = curO;
+
+                if (curX === xCount && curO === oCount) {
+                    clearInterval(interval);
+                    showResult();
+                }
+            }, 100);
+        }
+
+        function showResult() {
+            const title = document.getElementById('result-title');
+            const scoreText = document.getElementById('result-score');
+
+            if (xCount === oCount) {
+                title.innerText = "성공!";
+                scoreText.innerText = `점수: ${xCount}`;
+                scale.style.transform = `rotate(0deg)`;
+            } else {
+                title.innerText = "실패...";
+                scoreText.innerText = "균형이 맞지 않습니다.";
+                const finalAngle = (xCount - oCount) > 0 ? 30 : -30;
+                scale.style.transform = `rotate(${finalAngle}deg)`;
+            }
+            popup.classList.add('show');
+        }
+
+        function resetGame() {
+            location.reload(); // 간단하게 초기화
+        }
+    </script>
+</body>
+</html>
