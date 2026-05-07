@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XO Rhythm: Scribble Playlist</title>
+    <title>XO Rhythm: Scribble Pro</title>
     <style>
-        /* 손글씨 폰트 */
+        /* 폰트 설정 */
         @font-face {
             font-family: 'ScribbleFont';
             src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/Momsuim.woff2') format('woff2');
@@ -24,67 +24,86 @@
             justify-content: flex-start;
             height: 100vh;
             margin: 0;
+            padding-top: 80px; /* 전체적으로 아래로 내림 */
             overflow: hidden;
             user-select: none;
         }
 
-        /* --- 1. 최상단 플레이리스트 바 --- */
+        /* --- 상단 컨트롤 영역 --- */
+        #top-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .control-btn {
+            padding: 6px 15px;
+            font-family: 'ScribbleFont';
+            background: white;
+            border: 2px solid #333;
+            border-radius: 10px 20px 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 3px 3px 0 #333;
+            transition: all 0.1s;
+        }
+        .control-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #333; }
+        .control-btn.active { background: #333; color: white; }
+
+        /* --- 플레이리스트 바 (모바일 최적화) --- */
         #playlist-bar {
-            width: 90%;
-            max-width: 400px;
-            margin-top: 20px;
-            padding: 10px 20px;
+            width: 85%;
+            max-width: 350px;
+            padding: 12px 15px;
             border: 3px solid #333;
-            border-radius: 40px 10px 35px 15px / 15px 35px 10px 40px; /* 손그림 사각형 */
+            border-radius: 40px 10px 35px 15px / 15px 35px 10px 40px;
             background: #fff;
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: 5px 5px 0 #333;
+            box-shadow: 6px 6px 0 #333;
+            margin-bottom: 30px;
         }
 
-        #album-art {
+        #play-btn {
             width: 45px;
             height: 45px;
             border: 2px solid #333;
-            border-radius: 8px;
-            background: #eee;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
         }
 
-        #track-info {
-            display: flex;
-            flex-direction: column;
-        }
+        #track-info { display: flex; flex-direction: column; flex: 1; }
+        #track-title { font-size: 20px; margin: 0; color: #222; }
+        #artist-name { font-size: 14px; margin: 0; color: #777; }
 
-        #track-title { font-size: 22px; margin: 0; color: #222; }
-        #artist-name { font-size: 16px; margin: 0; color: #777; }
-
-        /* --- 2. 저울 및 상태 정보 --- */
+        /* --- 상태 메시지 --- */
         #status-msg {
-            margin-top: 25px;
-            font-size: 20px;
+            font-size: 18px;
             color: #ff4d4d;
             height: 24px;
+            margin-bottom: 15px;
         }
 
+        /* --- 저울 영역 (받침대 세모) --- */
         #scale-wrapper {
             position: relative;
-            width: 350px;
-            height: 160px;
+            width: 320px;
+            height: 140px;
             display: flex;
             justify-content: center;
             align-items: flex-end;
-            margin-top: 10px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         #scale-bar-container {
             position: absolute;
-            top: 60px;
+            top: 50px;
             width: 100%;
             transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
             transform-origin: center center;
@@ -101,64 +120,63 @@
         .count-num {
             position: absolute;
             top: -55px;
-            font-size: 45px;
+            font-size: 42px;
             font-weight: bold;
-            opacity: 0; /* 평소엔 숨김 */
+            opacity: 0;
             transition: opacity 0.5s;
         }
 
         #scale-pivot {
             width: 0;
             height: 0;
-            border-left: 35px solid transparent;
-            border-right: 35px solid transparent;
-            border-bottom: 55px solid #333;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 50px solid #333;
             position: absolute;
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
         }
 
-        /* --- 3. 입체 버튼 및 하트 --- */
-        .game-container {
-            display: flex;
-            gap: 60px;
-            z-index: 5;
-        }
+        /* --- 게임 버튼 영역 --- */
+        .game-container { display: flex; gap: 40px; z-index: 5; }
 
         .xo-button {
-            width: 130px;
-            height: 130px;
+            width: 115px;
+            height: 115px;
             background: white;
             border: 4px solid #333;
-            border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+            border-radius: 15px 125px 15px 155px / 155px 15px 125px 15px;
             font-family: 'ScribbleFont';
-            font-size: 80px;
+            font-size: 65px;
             cursor: pointer;
             position: relative;
-            box-shadow: 12px 12px 0px #333;
+            box-shadow: 10px 10px 0px #333;
             transition: all 0.1s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .xo-button:active {
-            transform: translate(8px, 8px);
-            box-shadow: 4px 4px 0px #333;
-        }
+        .xo-button:active { transform: translate(6px, 6px); box-shadow: 4px 4px 0px #333; }
 
+        /* 음수 시 빗금 없이 붉게 변함 */
         .xo-button.penalty {
-            border-color: #ff4d4d;
-            box-shadow: 12px 12px 0px #ff4d4d;
-            background-image: repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(255, 0, 0, 0.1) 10px, rgba(255, 0, 0, 0.1) 20px);
+            background-color: #ffcccc !important;
+            border-color: #ff4d4d !important;
+            box-shadow: 10px 10px 0px #ff4d4d !important;
         }
 
         .active-glow {
-            outline: 12px solid rgba(173, 255, 47, 0.3);
-            outline-offset: 8px;
+            outline: 12px solid rgba(173, 255, 47, 0.4);
+            outline-offset: 6px;
         }
 
+        /* 하드 모드 적용 시 가이드 숨김 */
+        body.hard-mode .active-glow { outline: none !important; }
+        body.hard-mode #status-msg { visibility: hidden !important; }
+
+        /* 손그림 하트 애니메이션 */
         .heart {
             position: absolute;
             width: 25px;
@@ -178,57 +196,58 @@
         }
         .heart::before { top: -12px; left: 0; }
         .heart::after { left: 12px; top: 0; }
-
         @keyframes heartFloat {
             0% { transform: translate(-50%, 0) rotate(-45deg) scale(0.6); opacity: 1; }
-            100% { transform: translate(-50%, -130px) rotate(-45deg) scale(1.3); opacity: 0; }
+            100% { transform: translate(-50%, -120px) rotate(-45deg) scale(1.3); opacity: 0; }
         }
 
-        /* --- 4. 결과 팝업 --- */
+        /* --- 결과 팝업 (저울 아래 배치) --- */
         #popup {
             position: absolute;
-            bottom: 60px;
+            bottom: 40px;
             left: 50%;
             transform: translate(-50%, 40px) scale(0);
-            width: 260px;
+            width: 250px;
             background: white;
-            border: 4px solid #333;
+            border: 5px solid #333;
             border-radius: 10px 40px 15px 30px;
             padding: 25px;
             text-align: center;
             z-index: 20;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             visibility: hidden;
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.1);
         }
-
-        #popup.show {
-            transform: translate(-50%, 0) scale(1);
-            visibility: visible;
-        }
+        #popup.show { transform: translate(-50%, 0) scale(1); visibility: visible; }
 
         .retry-btn {
             margin-top: 15px;
-            padding: 8px 25px;
+            padding: 8px 20px;
             font-family: 'ScribbleFont';
-            font-size: 20px;
+            font-size: 18px;
             background: #fff;
             border: 2px solid #333;
-            border-radius: 5px 20px 8px 15px;
+            border-radius: 10px 20px 8px 18px;
             cursor: pointer;
         }
     </style>
 </head>
-<body>
+<body id="game-body">
+
+    <div id="top-controls">
+        <button class="control-btn" onclick="changeSong()">노래 바꾸기</button>
+        <button id="hard-btn" class="control-btn" onclick="toggleHardMode()">하드 모드</button>
+    </div>
 
     <div id="playlist-bar">
-        <div id="album-art">♪</div>
+        <button id="play-btn" onclick="startCountdown()">▶</button>
         <div id="track-info">
             <p id="track-title">XOXO (Kisses & Hugs)</p>
             <p id="artist-name">EXO</p>
         </div>
     </div>
 
-    <div id="status-msg">준비...</div>
+    <div id="status-msg"></div>
 
     <div id="scale-wrapper">
         <div id="scale-bar-container">
@@ -246,31 +265,50 @@
     </div>
 
     <div id="popup">
-        <h1 id="pop-title" style="margin:0; font-size: 34px;">결과</h1>
-        <p id="pop-score" style="margin:10px 0; font-size: 24px;">점수: 0</p>
+        <h1 id="pop-title" style="margin:0; font-size: 32px;">결과</h1>
+        <p id="pop-score" style="margin:10px 0; font-size: 22px;">점수: 0</p>
         <button class="retry-btn" onclick="location.reload()">다시 하기</button>
     </div>
 
     <script>
         let xCount = 0, oCount = 0;
-        let isActive = false, isGameOver = false;
+        let isActive = false, isGameOver = false, isHardMode = false;
+        let gameTimer;
 
+        const body = document.getElementById('game-body');
         const btnX = document.getElementById('btnX');
         const btnO = document.getElementById('btnO');
         const scaleBar = document.getElementById('scale-bar-container');
         const statusMsg = document.getElementById('status-msg');
         const popup = document.getElementById('popup');
 
-        function createHeart(parent) {
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            heart.style.left = '50%';
-            parent.appendChild(heart);
-            setTimeout(() => heart.remove(), 800);
+        function changeSong() {
+            document.getElementById('track-title').innerText = "XO (Only If You Say Yes)";
+            document.getElementById('artist-name').innerText = "ENHYPEN";
         }
 
-        // 임시 활성화 타이머 (나중에 실제 음원과 동기화)
-        function toggle() {
+        function toggleHardMode() {
+            isHardMode = !isHardMode;
+            body.classList.toggle('hard-mode');
+            document.getElementById('hard-btn').classList.toggle('active');
+        }
+
+        function startCountdown() {
+            document.getElementById('play-btn').disabled = true;
+            statusMsg.innerText = "준비...";
+            setTimeout(() => {
+                startGame();
+            }, 2000); // 2초 뒤 시작
+        }
+
+        function startGame() {
+            statusMsg.innerText = "게임 시작!";
+            // 3초마다 활성/비활성 전환 (테스트용)
+            gameTimer = setInterval(toggleActivity, 3000);
+            setTimeout(endGame, 20000); // 20초 후 게임 종료
+        }
+
+        function toggleActivity() {
             if (isGameOver) return;
             isActive = !isActive;
             if (isActive) {
@@ -278,30 +316,37 @@
                 btnX.classList.add('active-glow');
                 btnO.classList.add('active-glow');
             } else {
-                statusMsg.innerText = "기울기 체크 중...";
+                statusMsg.innerText = "대기 중...";
                 btnX.classList.remove('active-glow');
                 btnO.classList.remove('active-glow');
                 updateTilt();
             }
         }
-        setInterval(toggle, 4000);
 
         function handleClick(type) {
             if (isGameOver) return;
-            createHeart(type === 'X' ? btnX : btnO);
+            const btn = (type === 'X') ? btnX : btnO;
+
+            // 하트 애니메이션 생성
+            const heart = document.createElement('div');
+            heart.className = 'heart'; 
+            heart.style.left = '50%';
+            btn.appendChild(heart);
+            setTimeout(() => heart.remove(), 800);
 
             if (type === 'X') {
                 isActive ? xCount++ : xCount--;
-                xCount < 0 ? btnX.classList.add('penalty') : btnX.classList.remove('penalty');
+                (xCount < 0) ? btnX.classList.add('penalty') : btnX.classList.remove('penalty');
             } else {
                 isActive ? oCount++ : oCount--;
-                oCount < 0 ? btnO.classList.add('penalty') : btnO.classList.remove('penalty');
+                (oCount < 0) ? btnO.classList.add('penalty') : btnO.classList.remove('penalty');
             }
         }
 
         btnX.onclick = () => handleClick('X');
         btnO.onclick = () => handleClick('O');
 
+        // 키보드 조작 매핑
         window.onkeydown = (e) => {
             if (e.key.toLowerCase() === 'a') handleClick('X');
             if (e.key.toLowerCase() === 'l') handleClick('O');
@@ -310,53 +355,46 @@
         function updateTilt() {
             const diff = xCount - oCount;
             if (Math.abs(diff) >= 5) {
-                const angle = diff > 0 ? -18 : 18; // X가 많으면 왼쪽으로 내려감
-                scaleBar.style.transform = `rotate(${angle}deg)`;
+                scaleBar.style.transform = `rotate(${diff > 0 ? -15 : 15}deg)`;
             } else {
                 scaleBar.style.transform = `rotate(0deg)`;
             }
         }
 
-        // 30초 게임 종료 연출
-        setTimeout(() => {
+        function endGame() {
             isGameOver = true;
-            statusMsg.innerText = "정산 들어갑니다!";
+            clearInterval(gameTimer);
+            statusMsg.innerText = "정산 중...";
             reveal();
-        }, 30000);
+        }
 
         function reveal() {
-            const xNum = document.getElementById('x-num');
-            const oNum = document.getElementById('o-num');
-            xNum.style.opacity = 1;
-            oNum.style.opacity = 1;
-
-            let curX = 0, curO = 0;
-            const timer = setInterval(() => {
-                if (curX !== xCount) curX < xCount ? curX++ : curX--;
-                if (curO !== oCount) curO < oCount ? curO++ : curO--;
-                xNum.innerText = curX;
-                oNum.innerText = curO;
-
-                if (curX === xCount && curO === oCount) {
-                    clearInterval(timer);
-                    setTimeout(showResult, 800);
+            document.getElementById('x-num').style.opacity = 1;
+            document.getElementById('o-num').style.opacity = 1;
+            let cx = 0, co = 0;
+            const t = setInterval(() => {
+                if (cx !== xCount) cx < xCount ? cx++ : cx--;
+                if (co !== oCount) co < oCount ? co++ : co--;
+                document.getElementById('x-num').innerText = cx;
+                document.getElementById('o-num').innerText = co;
+                if (cx === xCount && co === oCount) {
+                    clearInterval(t);
+                    setTimeout(showPop, 800);
                 }
             }, 100);
         }
 
-        function showResult() {
-            const title = document.getElementById('pop-title');
-            const score = document.getElementById('pop-score');
-
+        function showPop() {
+            const t = document.getElementById('pop-title');
+            const s = document.getElementById('pop-score');
             if (xCount === oCount) {
-                title.innerText = "성공! 🎉";
-                score.innerText = `점수: ${xCount}`;
+                t.innerText = "성공! 🎉";
+                s.innerText = `점수: ${xCount}`;
                 scaleBar.style.transform = `rotate(0deg)`;
             } else {
-                title.innerText = "실패... ㅠ";
-                score.innerText = `균형 파괴! (차이: ${Math.abs(xCount-oCount)})`;
-                const finalAngle = (xCount - oCount) > 0 ? -30 : 30;
-                scaleBar.style.transform = `rotate(${finalAngle}deg)`;
+                t.innerText = "실패... ㅠ";
+                s.innerText = "균형이 무너졌어요!";
+                scaleBar.style.transform = `rotate(${xCount > oCount ? -30 : 30}deg)`;
             }
             popup.classList.add('show');
         }
